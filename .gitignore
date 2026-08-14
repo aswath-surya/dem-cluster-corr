@@ -1,0 +1,22 @@
+# python
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+
+# cotengra path caches
+ctg_cache/
+paths/
+
+# slide decks live elsewhere
+slides/
+
+# os / editor
+.DS_Store
+*.log
+
+# working notes and scratch images (not part of the package)
+ClaudeMarkdownTNDEM.md
+ClaudeMarkdownTNDEM.pdf
+dem_tns.md
+image-1.png

@@ -1,0 +1,15 @@
+# core
+numpy>=1.26
+stim>=1.13
+quimb>=1.14
+cotengra>=0.7.5
+matplotlib>=3.8
+# recommended for better contraction paths
+kahypar>=1.3
+optuna>=4.0
+# BB code experiments (bb_phenom_dem, fig_dem_zoo)
+quits>=1.1
+# notebook
+ipykernel
+# optional: GPU/alternative-backend experiments only
+# torch>=2.0
