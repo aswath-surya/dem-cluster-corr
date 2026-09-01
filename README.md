@@ -1,57 +1,48 @@
 # Detector error models as tensor networks
 
-Evaluates syndrome-history probabilities of stim detector error models (DEMs) by
-tensor network contraction, exactly where affordable and by belief propagation
-with a connected cluster expansion beyond that. Built on quimb, cotengra and
-stim. The scientific throughline: the contraction is the forward map of the
-Blume-Kohout and Young DEM-estimation framework (arXiv:2504.14643), which makes
-it an instrument for maximum-likelihood decoding, noise-model validation, and
-locating correlated noise.
+Syndrome-history probabilities for stim detector error models, by tensor-network
+contraction: exact where the contraction width allows, belief propagation plus a
+connected cluster expansion (Midha & Zhang, arXiv:2510.02290) also present. Relay-BP added as contraction method although notebook doesn't incorporate this yet. The
+contraction is the forward map of the DEM-estimation framework of Blume-Kohout &
+Young (arXiv:2504.14643), so with this one object we can do maximum-likelihood decoding (MLD),
+noise-model validation, and locating correlated noise. MLD, however, requires additional effort (ongoing): specifically, for qLDPC codes, logical classes $\sim 2^{10}$ so identifying Pr $(l | \vec{s})$ quite difficult; worm algorithm?
 
-## Contents
+The code is built on stim, quimb and cotengra.
 
-| file | what it is |
-|---|---|
-| `tensor_probability_estimation.ipynb` | the main narrative: construction, validation, cluster expansion, correlated-noise experiments, surface codes |
-| `dem_tn.py` | DEM to tensor network builder: COPY/XOR construction, observable legs, GF(2) admissibility guard, parity-chain decomposition for high-degree detectors, correlated-event injection with marginal-matched twins |
-| `cluster_expansion.py` | hand implementation of the connected cluster expansion of Midha and Zhang (arXiv:2510.02290): edge-subset loop enumeration, excitation projectors, Ursell weights, on top of quimb's D1BP fixed point |
-| `dem_viz.py` | figure library (convergence, loop decay, correlation spectra, network drawings) |
-| `experiments.py` | experiment drivers and figure functions behind the slide deck; the notebook's reproduction section and both scripts call these |
-| `run_surface_ce.py` | command line: exact vs BP vs cluster expansion on a surface-code DEM (`python run_surface_ce.py -d 5 --circuit-level ...`) |
-| `run_correlated_validation.py` | command line: correlated-noise twin test with per-shot likelihood ratios (`python run_correlated_validation.py --circuit-level`) |
-| `figures/` | all generated figures |
+## Layout
 
-## Quickstart
+`tensor_probability_estimation.ipynb` is a walkthrough: construction,
+validation, the cluster expansion, correlated-noise experiments, surface codes.
+The main machinery is in `dem_tn.py` (DEM to network: COPY/XOR construction,
+observable legs, GF(2) admissibility/parity evaluation, parity-chain decomposition for
+high-degree detectors, correlated-event injection with marginal-matched twins)
+and `cluster_expansion.py` (edge-subset loop enumeration, excitation
+projectors, Ursell weights, on quimb's D1BP fixed point). `dem_viz.py` draws
+the figures, `experiments.py` has drivers behind notebook's
+reproduction section & other scripts:
+
+```bash
+python run_surface_ce.py -d 5            # exact vs BP vs cluster expansion
+python run_correlated_validation.py      # twin-model correlation test
+```
+
+## Setup
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python -m ipykernel install --user --name dem-tn
-# open tensor_probability_estimation.ipynb and run top to bottom,
-# or reproduce the headline figures without the notebook:
-python run_surface_ce.py
-python run_correlated_validation.py --fig figures/llr.png
 ```
 
-## Headline results
+Then run the notebook top to bottom, or the two scripts above.
 
-- Exact contraction validated against brute force to 1e-15, including logical
-  observable legs (maximum-likelihood decoding as a byproduct).
-- The connected cluster expansion converges exponentially in loop weight on
-  DEM networks; quimb's built-in loop routines do not compute this object.
-- Injected correlated noise appears as specific new loops, and the loop
-  corrections carry the correlation information a BP-only likelihood misses
-  (14 percent of the per-shot log-likelihood ratio on average).
-- On 3D phenomenological surface-code networks the expansion is the cheapest
-  reliable evaluator: at d=5 it matches compressed contraction to 1e-4 nats at
-  30-200x less cost per shot, with both method families certifying each other.
-- At circuit level the global expansion is outside its convergence regime
-  (spacetime hub detectors create a dense gas of overlapping short loops) and
-  plateaus at 1e-2 nats; compressed contraction there can false-plateau below
-  the exact product lower bound and needs independent validation. For
-  difference objects (model-validation LLRs, observable ratios) a localized
-  expansion enumerating only loops through the modified region remains sound.
+## What came out
 
-Key references: Blume-Kohout and Young arXiv:2504.14643; Derks, Townsend-Teague,
-Burchards, Eisert arXiv:2407.13826; Midha and Zhang arXiv:2510.02290; Midha,
-Sommers, Tindall, Abanin arXiv:2604.03228.
+Exact contraction agrees with brute force at the 1e-15 level, observable legs included, which makes the evaluator an ML decoder as well (after sorting out the logical class identification problem). The cluster expansion converges exponentially in loop weight on these networks (quimb's built-in loop routines compute a different object and do not). Injected correlated noise shows up as specific new loops, and the loop corrections carry the correlation information a BP-only likelihood misses: O(10) percent of the per-shot log-likelihood ratio on average, more on the shots that matter.
+
+On 3D phenomenological surface-code networks the expansion is the cheapest reliable evaluator: at d=5 it matches compressed contraction to 1e-4 at 30-200x less cost per shot, and the two method (families) certify each other. At circuit level the global expansion leaves its convergence regime (spacetime hub detectors make a dense gas of overlapping short loops) and plateaus at 1e-2 (LLR), while compressed contraction there can false-plateau below an exact lower bound, so neither is trustworthy alone. Note that clearly for reasonably large 3D surface codes, exact contraction quickly becomes infeasible. Difference objects, model-validation LLRs and observable ratios, stay tractable at circuit level through a localized expansion that only enumerates loops through the modified region (consult 2604.03228 treatment of observables/two-point correlators).
+
+## References
+
+Blume-Kohout & Young, arXiv:2504.14643. Derks, Townsend-Teague, Burchards,
+Eisert, arXiv:2407.13826. Midha & Zhang, arXiv:2510.02290. Midha, Sommers,
+Tindall, Abanin, arXiv:2604.03228.
